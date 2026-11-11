@@ -1,0 +1,11 @@
+Retro Desktop Icons — SaurezH
+Source and original usage terms: https://saurezh.itch.io/rdi
+Downloaded from the creator's free download flow on 2026-11-10.
+
+The creator permits commercial and non-commercial use inside games,
+applications and other projects. Attribution is optional.
+Reselling the asset pack, reselling modified asset files, distributing
+these files by themselves, or uploading them to asset stores is prohibited.
+
+This unmodified PNG atlas is embedded as an asset of the RETRO OS application.
+It is not offered as a standalone icon pack. The artwork remains SaurezH's.

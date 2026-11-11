@@ -1,0 +1,4 @@
+Mines icon: Misc_Bomb from the Haiku icon collection.
+Copyright (c) 2007-2026 Haiku, Inc. MIT license; see LICENSE in this folder.
+Official icon policy: https://www.haiku-inc.org/trademarks/haiku_icons/
+PNG export source: https://github.com/darealshinji/haiku-icons

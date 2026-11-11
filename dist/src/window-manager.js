@@ -1,0 +1,40 @@
+import {icon,el} from './render.js';
+import {bindPointer} from './input.js';
+const metadata={loading:['Loading...','welcome',450,260],pc:['내 컴퓨터','computer',660,560],'pc-editor':['PC 메모장','notepad',650,450],welcome:['시스템 등록 정보','computer',430,410],explorer:['내 컴퓨터','computer',600,405],notepad:['제목 없음 — 메모장','notepad',570,410],paint:['제목 없음 — 그림판','paint',680,510],terminal:['MS-DOS 프롬프트','terminal',620,390],settings:['디스플레이 및 시스템 설정','settings',540,520],mines:['지뢰찾기','mines',348,520]};
+export class WindowManager{
+ constructor({layer,taskbar,createApp,makeServices,onError}){Object.assign(this,{layer,taskbar,createApp,makeServices,onError});this.windows=new Map();this.order=[];this.serial=0;this.controller=new AbortController();window.addEventListener('resize',()=>this.fitAll(),{signal:this.controller.signal});}
+ openWindow(appType,options={}){
+  const key=appType==='pc-editor'?`pc-editor:${options.document?.id||'new'}`:appType==='explorer'?`${appType}:${options.folderId||'root'}`:appType==='notepad'?`${appType}:${options.fileId||'new'}`:appType;
+  const exists=[...this.windows.values()].find(s=>s.key===key);if(exists){this.restoreWindow(exists.id);return exists.id;}
+  if(this.windows.size>=12){this.onError('창은 최대 12개까지 열 수 있습니다. 사용하지 않는 창을 닫아 주세요.');return null;}
+  if(appType==='explorer'&&[...this.windows.values()].filter(s=>s.appType===appType).length>=4){this.onError('파일 탐색기는 최대 4개까지 열 수 있습니다.');return null;}
+  const meta=metadata[appType];if(!meta)return null;
+  const n=this.windows.size;const mobile=innerWidth<700&&appType!=='loading';const state={id:`window-${++this.serial}`,key,appType,x:Math.max(110,Math.round((innerWidth-meta[2])/2)-100+n*38),y:Math.max(30,Math.round((innerHeight-meta[3])/2)-45+n*42),width:meta[2],height:meta[3],zIndex:1,minimized:false,maximized:mobile,restoreBounds:null,dirty:false,closing:false};
+  if(appType==='loading'){state.x=Math.round((innerWidth-state.width)/2);state.y=Math.round((innerHeight-42-state.height)/2);}
+  const controller=new AbortController();state.controller=controller;
+  const win=el('section','os-window');win.id=state.id;win.tabIndex=-1;win.setAttribute('role','region');win.setAttribute('aria-label',meta[0]);
+  const titlebar=el('header','window-titlebar');titlebar.innerHTML=icon(meta[1],18);const title=el('span','window-title',meta[0]);titlebar.append(title);
+  const controls=el('div','window-controls');for(const [action,label,symbol] of [['minimize','최소화','_'],['maximize','최대화 / 복원','□'],['close','닫기','×']]){const b=el('button',`bevel-button window-${action}`,symbol);b.type='button';b.setAttribute('aria-label',label);b.addEventListener('click',()=>action==='minimize'?this.minimizeWindow(state.id):action==='maximize'?this.maximizeWindow(state.id):this.closeWindow(state.id),{signal:controller.signal});controls.append(b);}titlebar.append(controls);win.append(titlebar);
+  const body=el('div','window-content');win.append(body);
+  state.element=win;state.titleElement=title;state.body=body;
+  const task=el('button','bevel-button task-button');task.innerHTML=icon(meta[1],18);const taskTitle=el('span','',meta[0]);task.append(taskTitle);task.title=meta[0];task.addEventListener('click',()=>!state.minimized&&this.order.at(-1)===state.id?this.minimizeWindow(state.id):this.restoreWindow(state.id),{signal:controller.signal});state.task=task;state.taskTitle=taskTitle;
+  win.addEventListener('pointerdown',()=>this.focusWindow(state.id),{signal:controller.signal});win.addEventListener('focusin',()=>this.focusWindow(state.id),{signal:controller.signal});
+  titlebar.addEventListener('dblclick',e=>{if(!e.target.closest('button'))this.maximizeWindow(state.id);},{signal:controller.signal});
+  bindPointer(titlebar,{signal:controller.signal,start:e=>{if(state.maximized)return false;this.focusWindow(state.id);win.classList.add('dragging');return {px:e.clientX,py:e.clientY,x:state.x,y:state.y};},move:(e,d)=>{state.x=d.x+e.clientX-d.px;state.y=d.y+e.clientY-d.py;this.constrain(state);this.paint(state);},end:()=>win.classList.remove('dragging')});
+  for(const dir of ['n','s','e','w','ne','nw','se','sw']){const handle=el('div',`resize-handle resize-${dir}`);win.append(handle);bindPointer(handle,{signal:controller.signal,start:e=>{if(state.maximized)return false;return {x:state.x,y:state.y,w:state.width,h:state.height,px:e.clientX,py:e.clientY};},move:(e,d)=>{const dx=e.clientX-d.px,dy=e.clientY-d.py;let w=d.w,h=d.h,x=d.x,y=d.y;if(dir.includes('e'))w=d.w+dx;if(dir.includes('s'))h=d.h+dy;if(dir.includes('w')){w=d.w-dx;x=d.x+dx;}if(dir.includes('n')){h=d.h-dy;y=d.y+dy;}state.width=Math.max(300,w);state.height=Math.max(230,h);if(w>=300)state.x=x;if(h>=230)state.y=y;this.constrain(state);this.paint(state);}});}
+  this.windows.set(state.id,state);this.order.push(state.id);this.layer.append(win);this.taskbar.append(task);this.constrain(state);if(appType==='loading'){state.x=Math.round((innerWidth-state.width)/2);state.y=Math.max(0,Math.round((innerHeight-42-state.height)/2));}this.paint(state);this.focusWindow(state.id);
+  const services=this.makeServices(state);
+  services.setTitle=text=>{title.textContent=text;taskTitle.textContent=text;task.title=text;win.setAttribute('aria-label',text);};services.setDirty=dirty=>{state.dirty=!!dirty;};services.close=()=>this.closeWindow(state.id);
+  try{state.app=this.createApp(appType,options);state.app.mount(body,services);}catch(error){this.onError('프로그램을 여는 중 오류가 발생했습니다. '+error.message);this.closeWindow(state.id,true);}
+  return state.id;
+ }
+ constrain(s){for(const [key,fallback]of [['x',0],['y',0],['width',400],['height',300]])if(!Number.isFinite(s[key]))s[key]=fallback;const h=Math.max(200,innerHeight-42);s.width=Math.min(Math.max(300,s.width),innerWidth-8);s.height=Math.min(Math.max(230,s.height),h-8);s.x=Math.min(Math.max(0,s.x),Math.max(0,innerWidth-s.width));s.y=Math.min(Math.max(0,s.y),Math.max(0,h-s.height));}
+ paint(s){Object.assign(s.element.style,{left:`${s.maximized?0:s.x}px`,top:`${s.maximized?0:s.y}px`,width:`${s.maximized?innerWidth:s.width}px`,height:`${s.maximized?innerHeight-42:s.height}px`,zIndex:s.zIndex});s.element.hidden=s.minimized;s.element.classList.toggle('maximized',s.maximized);}
+ focusWindow(id){if(document.querySelector('dialog[open]'))return;const s=this.windows.get(id);if(!s||s.minimized)return;this.order=this.order.filter(i=>i!==id);this.order.push(id);this.order.forEach((i,n)=>{const w=this.windows.get(i);w.zIndex=n+1;w.element.style.zIndex=n+1;w.element.classList.toggle('active',i===id);w.task.classList.toggle('active',i===id&&!w.minimized);});}
+ minimizeWindow(id){const s=this.windows.get(id);if(!s)return;s.minimized=true;this.paint(s);s.task.classList.remove('active');s.app.visibility?.(false);const next=[...this.order].reverse().find(i=>!this.windows.get(i).minimized);if(next)this.focusWindow(next);}
+ maximizeWindow(id){const s=this.windows.get(id);if(!s)return;if(s.maximized){s.maximized=false;if(s.restoreBounds)Object.assign(s,s.restoreBounds);}else{s.restoreBounds={x:s.x,y:s.y,width:s.width,height:s.height};s.maximized=true;}this.constrain(s);this.paint(s);this.focusWindow(id);}
+ restoreWindow(id){const s=this.windows.get(id);if(!s)return;s.minimized=false;this.paint(s);this.focusWindow(id);s.app.visibility?.(true);}
+ async closeWindow(id,force=false){const s=this.windows.get(id);if(!s||(s.closing&&!force))return false;s.closing=true;try{if(!force&&s.app?.beforeClose&&!(await s.app.beforeClose()))return false;if(!this.windows.has(id))return true;s.controller.abort();s.app?.unmount?.();s.element.remove();s.task.remove();this.windows.delete(id);this.order=this.order.filter(i=>i!==id);const next=[...this.order].reverse().find(i=>!this.windows.get(i).minimized);if(next)this.focusWindow(next);return true;}finally{s.closing=false;}}
+ fitAll(){for(const s of this.windows.values()){this.constrain(s);if(s.appType==='loading'){s.x=Math.round((innerWidth-s.width)/2);s.y=Math.max(0,Math.round((innerHeight-42-s.height)/2));}this.paint(s);}}
+ async destroy(){for(const id of [...this.windows.keys()])await this.closeWindow(id,true);this.controller.abort();}
+}

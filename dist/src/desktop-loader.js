@@ -1,0 +1,35 @@
+import {el} from './render.js';
+import {CAT_ASSETS,CAT_COATS} from './cat-assets.js';
+const imageCache=new Map(),loadedImages=new Map();
+const FPS={Idle:6,Walk:8,Run:12,Laying:8,Sitting:1,Sleeping1:1,'Licking 1':8,Stretching:8,Meow:8};
+const smooth=t=>t*t*(3-2*t);
+export function advanceLoaderTime(time,delta){return (Number.isFinite(time)?Math.max(0,time):0)+Math.min(.1,Math.max(0,Number.isFinite(delta)?delta:0));}
+export function loaderSceneAt(time){
+ const t=Number.isFinite(time)?Math.max(0,time):0,c=t%46;let state='sit',phase=c,target=.16,direction=1,clip='Idle';
+ if(c<1.5){}
+ else if(c<6){state='run';phase=c-1.5;const p=phase/4.5;target=.16+.68*smooth(p);clip=p<.1||p>.9?'Walk':'Run';}
+ else if(c<12){state='play';phase=c-6;target=.84;clip='Licking 1';}
+ else if(c<18){phase=c-12;target=.84;clip='Sitting';}
+ else if(c<19){state='sleep';phase=c-18;target=.84;clip='Laying';}
+ else if(c<32){state='sleep';phase=c-19;target=.84;clip='Sleeping1';}
+ else if(c<33.6){phase=c-32;target=.84;clip='Stretching';}
+ else if(c<38.6){state='run';phase=c-33.6;const p=phase/5;target=.84-.68*smooth(p);direction=-1;clip=p<.1||p>.9?'Walk':'Run';}
+ else{phase=c-38.6;direction=-1;clip=phase<.7?'Meow':'Sitting';}
+ const count=CAT_ASSETS.white[clip].frames.length;
+ const frame=clip==='Laying'||clip==='Stretching'?Math.min(count-1,Math.floor(phase*FPS[clip])):Math.floor(phase*FPS[clip])%count;
+ return {state,phase,target,direction,clip,frame,progress:8+(t%90)/90*87};
+}
+export function catDrawBounds(scene){const coat=CAT_ASSETS[scene.coat]||CAT_ASSETS.white,clip=coat[scene.clip]||coat.Idle;const frame=Math.max(0,Math.min(clip.frames.length-1,scene.frame|0));const [x,y,w,h]=clip.frames[frame];return {url:clip.url,source:[frame*50+x,y,w,h],destination:[x-1,34-h,w,h]};}
+export function drawCat(context,scene,images=loadedImages){context.clearRect(0,0,48,40);const {url,source,destination}=catDrawBounds(scene),img=images.get(url);if(!img)return false;context.save();if(scene.direction<0){context.translate(48,0);context.scale(-1,1);}context.drawImage(img,...source,...destination);context.restore();return true;}
+function loadCoat(name){return Promise.all(Object.values(CAT_ASSETS[name]).map(clip=>{if(imageCache.has(clip.url))return imageCache.get(clip.url).promise;const img=new Image();const promise=new Promise((resolve,reject)=>{img.onload=()=>{loadedImages.set(clip.url,img);resolve(img);};img.onerror=()=>{imageCache.delete(clip.url);reject(new Error('고양이 이미지 파일을 읽지 못했습니다.'));};img.src=clip.url;});imageCache.set(clip.url,{image:img,promise});return promise;}));}
+export function releaseCatImages(){for(const {image} of imageCache.values()){image.onload=null;image.onerror=null;image.src='';}loadedImages.clear();imageCache.clear();}
+export function createDesktopLoader(){let abort,observer,canvas,context,frame,bar,alive=false,visible=true,raf=null,last=null,time=0,sceneTime=0,lastPercent=-1,interaction=null,coatIndex=0,services,media;
+ const stop=()=>{if(raf!==null)cancelAnimationFrame(raf);raf=null;last=null;};
+ const animateAllowed=()=>alive&&visible&&!document.hidden&&services.getSettings().animations&&!media.matches;
+ const sceneNow=()=>{const base=loaderSceneAt(sceneTime);if(!animateAllowed())return {...base,state:'sit',clip:'Sitting',frame:0};if(!interaction)return base;const t=interaction.time,sleep=interaction.sleep;let clip,phase;if(sleep&&t<1.6){clip='Stretching';phase=t;}else if(t<(sleep?2.3:.7)){clip='Meow';phase=t-(sleep?1.6:0);}else if(sleep&&t>5.5){clip='Laying';phase=t-5.5;}else{clip='Licking 1';phase=t-(sleep?2.3:.7);}const count=CAT_ASSETS.white[clip].frames.length;const idx=Math.floor(Math.max(0,phase)*FPS[clip]);return {...base,state:'play',clip,frame:clip==='Stretching'||clip==='Laying'?Math.min(count-1,idx):idx%count};};
+ const render=()=>{const scene={...sceneNow(),coat:CAT_COATS[coatIndex]};canvas.style.left=Math.round(Math.max(0,frame.clientWidth-144)*scene.target)+'px';context.save();context.setTransform(canvas.width/48,0,0,canvas.height/40,0,0);drawCat(context,scene);context.restore();const progress=8+(time%90)/90*87,percent=Math.floor(progress);if(percent!==lastPercent){bar.style.setProperty('--loading-progress',progress+'%');bar.setAttribute('aria-valuenow',String(percent));lastPercent=percent;}canvas.dataset.catState=scene.state;canvas.dataset.catClip=scene.clip;canvas.dataset.catCoat=scene.coat;};
+ const tick=timestamp=>{raf=null;if(!animateAllowed())return;const delta=last===null?0:Math.min(.1,Math.max(0,(timestamp-last)/1000));last=timestamp;time=advanceLoaderTime(time,delta);if(interaction){interaction.time+=delta;if(interaction.time>interaction.duration)interaction=null;}else sceneTime=advanceLoaderTime(sceneTime,delta);render();raf=requestAnimationFrame(tick);};
+ const sync=()=>{stop();if(!alive)return;render();if(animateAllowed())raf=requestAnimationFrame(tick);};
+ const prepare=()=>loadCoat(CAT_COATS[coatIndex]).then(()=>{if(alive)render();}).catch(e=>{if(alive)services.notify(e.message);});
+ return {mount(container,s){services=s;alive=true;abort=new AbortController();const signal=abort.signal;frame=s.frame;frame.classList.add('loading-window');s.setTitle('Loading...');container.classList.add('desktop-loader');const title=el('div','loading-message','Loading...');bar=el('div','classic-progress recessed');bar.setAttribute('role','progressbar');bar.setAttribute('aria-label','로딩 애니메이션');bar.setAttribute('aria-valuemin','0');bar.setAttribute('aria-valuemax','100');bar.append(el('div','classic-progress-fill'));const cancel=el('button','bevel-button loading-cancel','취소');cancel.addEventListener('click',()=>s.close(),{signal});container.append(title,bar,cancel);canvas=el('canvas','desktop-cat');canvas.width=144*Math.min(devicePixelRatio||1,2);canvas.height=120*Math.min(devicePixelRatio||1,2);canvas.setAttribute('role','button');canvas.setAttribute('aria-label','픽셀 고양이와 놀기');canvas.title='클릭: 놀기 · 우클릭: 고양이 바꾸기';canvas.tabIndex=0;context=canvas.getContext('2d');context.imageSmoothingEnabled=false;frame.append(canvas);const play=()=>{interaction={time:0,sleep:loaderSceneAt(sceneTime).state==='sleep',duration:loaderSceneAt(sceneTime).state==='sleep'?6.5:5};if(animateAllowed())render();};canvas.addEventListener('click',play,{signal});canvas.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();play();}},{signal});canvas.addEventListener('contextmenu',e=>{e.preventDefault();coatIndex=(coatIndex+1)%CAT_COATS.length;prepare();},{signal});media=matchMedia('(prefers-reduced-motion: reduce)');document.addEventListener('visibilitychange',sync,{signal});window.addEventListener('pagehide',stop,{signal});window.addEventListener('pageshow',sync,{signal});window.addEventListener('retro-settings-change',sync,{signal});media.addEventListener('change',sync,{signal});observer=new ResizeObserver(()=>{if(alive)render();});observer.observe(frame);prepare();sync();},visibility(value){visible=value;sync();},unmount(){if(!alive)return;alive=false;stop();abort.abort();observer.disconnect();canvas.remove();canvas.width=0;canvas.height=0;context=null;frame.classList.remove('loading-window');}};
+}

@@ -1,0 +1,49 @@
+.paint-app,.mines-app,.settings-app{height:100%;display:flex;flex-direction:column;min-height:0;background:var(--surface,#c0c0c0);color:#111}
+.paint-workspace{display:flex;min-height:0;flex:1;padding:5px;gap:5px}
+.paint-tools{flex:0 0 55px;display:grid;grid-template-columns:repeat(2,25px);align-content:start;gap:3px;padding:2px}
+.paint-tools>button{min-width:25px;width:25px;height:27px;padding:0;font:24px/1 Arial,sans-serif}
+.paint-tools>button[aria-pressed=true],.paint-color[aria-pressed=true],.theme-choice[aria-pressed=true]{outline:1px dotted #111;outline-offset:-5px;box-shadow:inset 1px 1px #555,inset -1px -1px #fff}
+.paint-width{grid-column:span 2;font-size:11px;display:flex;flex-direction:column;gap:5px;margin-top:12px}
+.paint-width select{width:53px;padding:2px;font-size:11px;border-radius:0}
+.paint-stage{flex:1;min-width:0;min-height:0;background:#808080;overflow:auto;padding:6px;display:flex;align-items:flex-start;justify-content:center}
+.paint-canvas{background:#fff;flex-shrink:0;display:block;touch-action:none;cursor:crosshair;box-shadow:1px 1px #333}
+.paint-palette{display:flex;align-items:center;gap:7px;padding:7px 10px;border-top:1px solid #808080}
+.paint-current{width:32px;height:32px;flex:0 0 32px;border:2px solid #fff;outline:1px solid #808080}
+.paint-colors{display:grid;grid-template-columns:repeat(8,18px);gap:2px}
+.paint-color{width:18px;height:18px;min-width:0;min-height:0;padding:0;border:1px solid #111;box-shadow:inset 1px 1px #ddd;cursor:pointer}
+.paint-palette>input{width:31px;height:31px;padding:1px;border-radius:0;background:#c0c0c0}
+.paint-app .statusbar{white-space:normal;font-size:10px;min-height:23px;padding:4px 6px}
+.mines-content{padding:14px 18px 10px;max-width:338px;margin:auto;min-width:0;width:100%;box-sizing:border-box}
+.mine-score{padding:7px;display:flex;align-items:center;justify-content:space-between;background:#c0c0c0;margin-bottom:11px;border:2px solid;border-color:#808080 #fff #fff #808080}
+.mine-digits{font:27px/1.1 "Courier New",monospace;letter-spacing:1px;background:#210a0a;color:#ff3c3c;padding:3px 4px;text-shadow:0 0 2px #a00;min-width:51px;text-align:center;border:1px solid;border-color:#555 #fff #fff #555}
+.mine-restart{width:37px;height:36px;min-width:37px;padding:0;font:29px/1 Arial,sans-serif;color:#111}
+.mine-board{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));border:3px solid;border-color:#808080 #fff #fff #808080;gap:0;aspect-ratio:1}
+.mine-cell{appearance:none;border:0;border-radius:0;min-width:0;min-height:0;padding:0;aspect-ratio:1;background:#c0c0c0;color:#111;font:bold 20px/1 "Courier New",monospace;display:flex;align-items:center;justify-content:center;box-shadow:inset 2px 2px #fff,inset -2px -2px #808080;touch-action:manipulation;cursor:default}
+.mine-cell.revealed{box-shadow:none;border:1px solid;border-color:#909090 transparent transparent #909090;background:#c0c0c0}
+.mine-cell:focus-visible{outline:2px dotted #000;outline-offset:-4px;z-index:1}
+.mine-cell.exploded{background:#ff7474}
+.mine-cell[data-count="1"].revealed{color:#0000bf}.mine-cell[data-count="2"].revealed{color:#007000}.mine-cell[data-count="3"].revealed{color:#d00000}.mine-cell[data-count="4"].revealed{color:#000070}.mine-cell[data-count="5"].revealed{color:#700000}.mine-cell[data-count="6"].revealed{color:#007070}
+.mine-legend{font-size:11px;text-align:center;margin-top:12px;color:#333}
+.mines-app .statusbar{white-space:normal;font-size:10px;line-height:1.5;min-height:32px;padding:4px 7px}
+.mines-app .app-menu{display:flex;gap:8px;padding:4px}
+.mines-app .app-menu button[aria-pressed=true]{box-shadow:inset 1px 1px #555,inset -1px -1px #fff;background:#d8d8d8}
+.settings-scroll{padding:14px;flex:1;min-height:0;overflow:auto}
+.settings-heading{display:flex;gap:15px;align-items:center;margin:0 2px 18px}
+.settings-computer{width:60px;flex:0 0 60px}.settings-computer svg{width:100%;image-rendering:pixelated}
+.settings-heading strong{font-size:15px}.settings-heading p{font-size:11px;margin:6px 0 0;color:#555}
+.settings-fieldset{margin:13px 0 0;padding:12px;border:1px solid #808080;box-shadow:1px 1px #fff;min-width:0}
+.settings-fieldset legend{font-size:11px;padding:0 5px}
+.theme-list{display:flex;gap:8px;margin-bottom:13px}
+.theme-choice{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0!important;padding:7px!important;font-size:10px!important}
+.theme-miniature{width:100%;height:50px;position:relative;display:block;border:1px solid #777}
+.theme-mini-window{position:absolute;left:20%;top:20%;width:60%;height:58%;background:#c0c0c0;box-shadow:1px 1px #222,inset 1px 1px #fff;padding:2px;display:block}
+.theme-mini-window>span{display:block;height:6px;width:100%}
+.settings-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font-size:11px}
+.settings-row input[type=color]{width:69px;height:24px;padding:1px;background:#c0c0c0;border-radius:0}.settings-row select{max-width:150px;font-size:11px;padding:3px;border-radius:0}
+.settings-check{display:flex;align-items:center;gap:7px;margin:0 0 10px;font-size:11px}.settings-check input{accent-color:#000080;margin:0;width:14px;height:14px}
+.settings-note{font-size:10px;color:#444;line-height:1.7;margin:9px 0 0}
+.settings-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.settings-actions button{font-size:10px!important}
+.settings-app .statusbar{white-space:normal;font-size:10px;line-height:1.6;padding:4px 6px}
+@media(max-width:480px){.paint-workspace{padding:3px;gap:2px}.paint-tools{flex-basis:49px;grid-template-columns:repeat(2,22px)}.paint-tools>button{width:22px;min-width:22px}.paint-width select{width:46px}.paint-palette{padding:6px;gap:5px}.paint-colors{grid-template-columns:repeat(8,17px)}.paint-color{width:17px;height:17px}.settings-scroll{padding:10px}.theme-list{gap:5px}.theme-choice{padding:5px!important;font-size:9px!important}}
+
+.mines-app{overflow:auto}.mines-content{flex-shrink:0}

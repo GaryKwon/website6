@@ -1,0 +1,9 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import {ICON_MAP,ICON_GRID,icon} from '../dist/src/render.js';
+import {CAT_ASSETS} from '../dist/src/cat-assets.js';
+import {catDrawBounds} from '../dist/src/desktop-loader.js';
+test('all sourced application icons reference the local atlas or licensed local PNG',async()=>{for(const [name,[x,y]]of Object.entries(ICON_MAP)){assert.ok(Number.isInteger(x)&&x>=0&&x<ICON_GRID.columns);assert.ok(Number.isInteger(y)&&y>=0&&y<ICON_GRID.rows);const html=icon(name,32);assert.match(html,/<image/);const href=html.match(/href="([^"]+)"/)[1];assert.equal(new URL(href).protocol,'file:');assert.ok((await fs.stat(new URL(href))).size>0);}const bomb=icon('mines');assert.match(bomb,/haiku\/mines\.png/);assert.ok((await fs.readFile(new URL('../dist/assets/icons/haiku/LICENSE',import.meta.url),'utf8')).includes('MIT'));});
+test('all artist cat strips exist, have valid frame dimensions and keep one ground line',async()=>{for(const [coat,clips]of Object.entries(CAT_ASSETS))for(const [name,clip]of Object.entries(clips)){const png=await fs.readFile(new URL(clip.url));assert.equal(png.readUInt32BE(16),clip.frames.length*50);assert.equal(png.readUInt32BE(20),50);for(let frame=0;frame<clip.frames.length;frame++){const [x,y,w,h]=clip.frames[frame];assert.ok(x>=0&&y>=0&&w>0&&h>0&&x+w<=50&&y+h<=50);const b=catDrawBounds({coat,clip:name,frame});assert.equal(b.destination[1]+b.destination[3],34);}}});
+test('GitHub Pages workflow deploys only the static dist directory',async()=>{const text=await fs.readFile(new URL('../.github/workflows/pages.yml',import.meta.url),'utf8');assert.match(text,/actions\/upload-pages-artifact@v4/);assert.match(text,/path: dist/);assert.match(text,/actions\/deploy-pages@v4/);assert.doesNotMatch(text,/companion\/server|api[_-]?key|npm install/);await fs.stat(new URL('../dist/.nojekyll',import.meta.url));});
