@@ -1,5 +1,7 @@
 # RETRO OS
 
+[공개 사이트 열기](https://garykwon.github.io/website6/) · [배포 워크플로](https://github.com/GaryKwon/website6/actions/workflows/pages.yml)
+
 HTML/CSS/Vanilla JavaScript로 만든 브라우저용 가상 데스크톱입니다. 부팅 후 가운데 로딩 창과 픽셀 고양이가 나타나며, 아이콘 또는 시작 메뉴에서 프로그램을 실행합니다. 백엔드·계정·API 키·외부 API·CDN이 필요하지 않습니다.
 
 ## 실행
@@ -91,7 +93,7 @@ SOAK_MINUTES=60 BASE_URL=http://localhost:4173/ node tests/browser-e2e.mjs
 2. `main` 또는 `master` 브랜치에 푸시합니다. 다른 브랜치를 쓰면 `.github/workflows/pages.yml`의 `branches`를 바꿉니다.
 3. **Actions → Deploy RETRO OS to GitHub Pages**가 성공하면 배포된 주소를 엽니다. **Run workflow**로 수동 실행할 수도 있습니다.
 
-워크플로는 Node.js 24에서 테스트를 실행한 뒤 `dist/`만 Pages에 업로드합니다. 서버 코드·데이터베이스·환경변수·API 키·npm 패키지 설치는 필요하지 않습니다. 이미지·글꼴·스크립트는 로컬 상대 경로를 사용하며 `/repo-name/` 하위 경로에서도 작동합니다. `.nojekyll`도 포함했습니다. 실제 GitHub Actions 실행과 GitHub Pages 게시 자체는 아직 수행하지 않았습니다.
+워크플로는 Node.js 24에서 테스트를 실행한 뒤 `dist/`만 Pages에 업로드합니다. 서버 코드·데이터베이스·환경변수·API 키·npm 패키지 설치는 필요하지 않습니다. 이미지·글꼴·스크립트는 로컬 상대 경로를 사용하며 `/repo-name/` 하위 경로에서도 작동합니다. `.nojekyll`도 포함했습니다. GaryKwon/website6 저장소에서 GitHub Actions의 55개 테스트와 GitHub Pages 배포를 실제로 완료했습니다. 공개 주소는 https://garykwon.github.io/website6/ 입니다.
 
 다른 정적 호스팅에는 `dist/`의 내용 전체를 공개 루트로 배포하세요. 브랜치 기반 Pages를 사용한다면 `dist/` 내용만 해당 브랜치 루트에 복사합니다. GitHub Pages는 정적 화면을 제공하며, 실제 Mac 제어는 아래 로컬 실행기로 사용합니다.
 

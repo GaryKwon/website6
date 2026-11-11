@@ -146,6 +146,17 @@ PC API 요청은 `pc-bridge.js`에서 로컬 실행기의 메타 토큰과 127.0
 
 390×844에서 문서 가로 폭 390px, 로딩 창 폭 382px/좌측 4px로 화면 안에 들어오고, 고양이가 제목줄 위에 표시됨을 확인했다. 기본 화면과 모바일 화면은 산출물 JPG로 저장했다. 창 크기 검증은 실제 모바일 하드웨어의 터치 검증을 의미하지 않는다.
 
-`.github/workflows/pages.yml`에 main/master 푸시·수동 실행 → Node 24 테스트 → Pages 업로드/배포를 구성하고 `dist/.nojekyll`을 추가했다. **실제 GitHub 저장소 생성·GitHub Actions 실행·GitHub Pages 게시는 NOT RUN**이다. 사용자가 저장소에 올린 뒤 Settings → Pages → Source: GitHub Actions를 선택해야 한다.
+`.github/workflows/pages.yml`에 main/master 푸시·수동 실행 → Node 24 테스트 → Pages 업로드/배포를 구성하고 `dist/.nojekyll`을 추가했다. 초기 준비 시점에는 GitHub 저장소 업로드·GitHub Actions 실행·GitHub Pages 게시를 수행하지 않았다. 이후 실제 배포 결과는 아래에 기록한다.
 
 기존의 실제 Mac 음량/테마 변경·사용자 개인 파일 편집, 다른 Mac 첫 실행, 장시간 soak/FPS/heap 검사는 여전히 미실행이다. 이번 자산·하위 경로 검증이 이 항목들의 통과를 뜻하지 않는다.
+
+
+## GitHub Pages 실제 배포 (2026-11-10 America/Los_Angeles)
+
+- 대상 저장소: https://github.com/GaryKwon/website6
+- 공개 URL: https://garykwon.github.io/website6/
+- Pages 소스를 GitHub Actions로 설정하고 프로젝트 소스를 반영했다. 최초 업로드를 위한 압축 파일은 가져오기 작업 후 저장소 기본 브랜치에서 제거했다.
+- 최초 실행 https://github.com/GaryKwon/website6/actions/runs/42979747650 에서 소스 가져오기·Node 24 테스트·Pages 설정·정적 아티팩트 업로드·배포 단계가 모두 success였다. 로그의 tests 55 / pass 55 / fail 0을 확인했다.
+- 공개 URL의 HTTP 200, 실제 브라우저에서 로컬 글꼴·아이콘·고양이·진행 막대 렌더링을 확인했다. 에셋 URL은 /website6/assets/... 아래로 생성됐다. 관찰한 공개 사이트 세션에서 콘솔 error/warn 0건이었다.
+- 초기 소스 가져오기 단계는 최종 워크플로에서 제거하고 contents 권한은 read로 설정했다. 이후 main/master 푸시 시 tests 실행 후 dist만 배포한다.
+- 실제 PC 제어는 Mac 로컬 실행기에서만 제공한다. GitHub Pages가 사용자의 컴퓨터를 원격 제어하지 않는다. 장시간 soak/FPS/heap 및 실제 Mac 파일 편집·시스템 값 변경의 기존 미실행 범위는 그대로다.
