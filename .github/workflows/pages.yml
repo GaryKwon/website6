@@ -1,0 +1,51 @@
+name: Deploy RETRO OS to GitHub Pages
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+      - name: Import prepared source package
+        if: ${{ hashFiles('dist/index.html') == '' }}
+        run: |
+          unzip -q retro-os-github-pages.zip -d "${RUNNER_TEMP}/retro-os-import"
+          cp -R "${RUNNER_TEMP}/retro-os-import/retro-os/." .
+          git restore -- .github
+          chmod +x 'RETRO OS.command'
+          git rm retro-os-github-pages.zip
+          git add dist tests companion 'RETRO OS.command' package.json README.md TEST_REPORT.md THIRD_PARTY_NOTICES.md .gitignore
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Import RETRO OS application source'
+          git push origin HEAD:main
+      - name: Set up Node for tests
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - name: Test
+        run: node --test tests/*.test.mjs
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload static site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
